@@ -1,0 +1,21 @@
+美术素材授权说明
+================
+
+本目录下的 atlas.png 由以下两个素材包合并而成：
+
+1. Kenney · Tiny Town
+   https://kenney.nl/assets/tiny-town
+   授权：CC0 1.0 Universal（公有领域贡献，可商用，无需署名）
+
+2. Kenney · Tiny Dungeon
+   https://kenney.nl/assets/tiny-dungeon
+   授权：CC0 1.0 Universal（公有领域贡献，可商用，无需署名）
+
+图集布局
+--------
+每格 16×16 像素，共 264 帧，12 列：
+
+  帧 0-131    : Tiny Town
+  帧 132-263  : Tiny Dungeon
+
+本项目不包含任何任天堂 / 宝可梦的美术资产。
