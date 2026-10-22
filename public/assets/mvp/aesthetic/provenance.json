@@ -1,0 +1,26 @@
+{
+  "generator": "OpenAI built-in imagegen; no CLI/API key",
+  "date": "2026-10-22",
+  "reference": "User-supplied ref_shanhai.png, style reference only; not redistributed; no license asserted",
+  "generatedArtLicense": "No new CC0 declaration; generated for this task",
+  "legacyRuntimeBase": "atlas_before.png: existing project atlas, Kenney attribution retained in repository credits",
+  "sources": {
+    "terrain_source.png": [
+      1254,
+      1254
+    ],
+    "ground_source_v2.png": [
+      1774,
+      887
+    ]
+  },
+  "hashes": {
+    "public/assets/mvp/aesthetic/terrain_source.png": "d4293e19b8d66a10e83f7c52e8d635306c897358c9151ae1a99fc1b16ea064c7",
+    "public/assets/mvp/aesthetic/ground_source_v2.png": "7aa3e781e0b56f6b95ccecc614c20e528360bd96212518b0e59def118a2792c0",
+    "public/assets/mvp/aesthetic/prompt.txt": "5de4097a438fa12ef9a98c83a4e8a566917a01d4d6e9861ee929bc2584d6b636",
+    "public/assets/mvp/aesthetic/ground_prompt_v2.txt": "25bb5ee1604f233bbbb2750c3c3934b9f60c0888f572b0e41723afdbb7a04346",
+    "scripts/build_aesthetic_tiles.py": "fa3c55c5c68a4979f1ca198a6d629ae961f9a16fbac1053fc423f70f14191efc",
+    "scripts/verify_aesthetic_tiles.py": "000714cd6cadd5e2a3114e414aadfb69d4b66467c7ca589d95db64738ea2eba5"
+  },
+  "postprocessing": "Crop, alpha cleanup, resample, quantize, composite existing artwork, reconcile boundary pixels. No hand-drawn substitute illustrations."
+}
