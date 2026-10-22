@@ -89,10 +89,10 @@ export default class OverworldScene extends Phaser.Scene {
 
     this.shadow = this.add.ellipse(px, py + 6, 10, 4, 0x000000, 0.25).setDepth(1);
 
-    this.player = this.physics.add.sprite(px, py, 'atlas', TILE.HERO);
+    this.player = this.physics.add.sprite(px, py - 4, 'hero', 1);
     this.player.setDepth(3);
     this.player.setSize(10, 8);
-    this.player.setOffset(3, 8);
+    this.player.setOffset(3, 16);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.layer);
 
@@ -101,9 +101,9 @@ export default class OverworldScene extends Phaser.Scene {
     for (const n of NPCS.filter((n) => n.map === this.mapDef.id)) {
       const sx = n.x * TS + TS / 2;
       const sy = n.y * TS + TS / 2;
-      const s = this.physics.add.sprite(sx, sy, 'atlas', n.frame).setDepth(3);
+      const s = this.physics.add.sprite(sx, sy - 4, 'npc', n.frame).setDepth(3);
       const b = s.body as Phaser.Physics.Arcade.Body;
-      b.setSize(10, 8).setOffset(3, 8).setImmovable(true);
+      b.setSize(10, 8).setOffset(3, 16).setImmovable(true);
       this.physics.add.collider(this.player, s);
       s.setInteractive({ useHandCursor: true });
       s.on('pointerdown', () => {
@@ -258,17 +258,18 @@ export default class OverworldScene extends Phaser.Scene {
     body.setVelocity(vx * SPEED, vy * SPEED);
     this.moving = vx !== 0 || vy !== 0;
 
-    // 朝向：水平翻转
-    if (vx < -0.1) this.player.setFlipX(true);
-    else if (vx > 0.1) this.player.setFlipX(false);
+    // 朝向 + 行走动画（有真正的四方向 3 帧动画了）
+    let dir: 'down' | 'up' | 'left' | 'right' = 'down';
+    if (Math.abs(vy) >= Math.abs(vx)) dir = vy < 0 ? 'up' : 'down';
+    else dir = vx < 0 ? 'left' : 'right';
 
-    // 走动时上下轻微起伏，替代行走帧
     if (this.moving) {
-      this.player.scaleY = 1 + Math.sin(time * 0.018) * 0.06;
-      this.player.y += Math.sin(time * 0.018) * 0.0; // 保持物理位置
+      this.player.setFlipX(false);
+      this.player.play(`hero-${dir}`, true);
     } else {
-      this.player.scaleY = 1;
+      this.player.play(`hero-${dir}-idle`, true);
     }
+    this.player.scaleY = 1;
 
     // 影子跟随
     this.shadow.setPosition(this.player.x, this.player.y + 7);
@@ -305,9 +306,14 @@ export default class OverworldScene extends Phaser.Scene {
           this.portalArmed = false;
           body.setVelocity(0, 0);
           this.cameras.main.fadeOut(200, 0, 0, 0);
-          this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+          // 双保险：fade 回调 + 定时兜底（某些环境动画事件不触发，会导致卡在 switching）
+          const go = () => {
+            if (!this.switching) return;
+            this.switching = false;
             this.scene.restart({ mapId: portal.to, spawn: portal.spawn });
-          });
+          };
+          this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, go);
+          this.time.delayedCall(280, go);
           return;
         }
       }

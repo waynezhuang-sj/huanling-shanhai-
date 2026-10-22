@@ -53,7 +53,7 @@ export default class BattleScene extends Phaser.Scene {
     this.add.rectangle(0, 150, W, 62, 0x223040).setOrigin(0).setAlpha(0.6);
 
     // 敌方（右上）
-    this.eSprite = this.add.image(352, 82, 'atlas', this.enemyFrame()).setScale(5);
+    this.eSprite = this.add.image(340, 76, 'creatures', this.enemyFrame()).setScale(2);
     this.eName = this.add.text(16, 18, '', {
       fontSize: '13px',
       color: '#e8eef5',
@@ -64,7 +64,7 @@ export default class BattleScene extends Phaser.Scene {
     this.eHp = this.add.text(152, 33, '', { fontSize: '10px', color: '#9fb0c0' });
 
     // 我方（左下）
-    this.pSprite = this.add.image(116, 176, 'atlas', this.playerFrame()).setScale(5);
+    this.pSprite = this.add.image(120, 178, 'creatures', this.playerFrame()).setScale(2);
     this.pName = this.add.text(248, 172, '', {
       fontSize: '13px',
       color: '#e8eef5',

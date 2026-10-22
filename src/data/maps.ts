@@ -318,17 +318,10 @@ function buildField(): MapDef {
   obj[9][14] = TILE.MUSHROOM;
   obj[20][29] = TILE.MUSHROOM;
 
-  // ⭐ 东侧入口：从镇上往西走 → 应从野区「东边」进入（地理方向连贯）
+  // ⭐ 东侧入口：从东边缘一路开进腹地（必须清掉物件层的树，否则进去就被堵死）
   for (let y = 12; y <= 14; y++) {
-    for (let x = w - 5; x <= w - 1; x++) {
+    for (let x = 18; x <= w - 1; x++) {
       obj[y][x] = -1;
-      ground[y][x] = TILE.PATH;
-    }
-  }
-  // 东入口向内引一条小路，接入腹地
-  for (let x = 18; x <= w - 5; x++) {
-    for (let y = 12; y <= 14; y++) {
-      if (obj[y][x] !== -1) continue;
       ground[y][x] = TILE.PATH;
     }
   }

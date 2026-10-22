@@ -18,7 +18,7 @@ export const NPCS: NpcDef[] = [
     map: 'town',
     x: 7,
     y: 6,
-    frame: 219, // 老者
+    frame: 0, // 巫医（老者持杖）
     role: 'healer',
     lines: [
       '旅者，你身上的灵息乱了。',
@@ -31,7 +31,7 @@ export const NPCS: NpcDef[] = [
     map: 'town',
     x: 21,
     y: 6,
-    frame: 220, // 棕衣青年
+    frame: 1, // 货郎（红衣）
     role: 'shop',
     lines: ['走过青丘野径的，都得备点灵草。', '看看要什么？'],
   },
@@ -41,7 +41,7 @@ export const NPCS: NpcDef[] = [
     map: 'town',
     x: 12,
     y: 12,
-    frame: 231, // 红发少女
+    frame: 2, // 浣衣女（黑衣）
     role: 'chat',
     lines: [
       '野径那头的林子，最近不太平。',
