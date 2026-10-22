@@ -39,7 +39,7 @@ export const TILE = {
   SIGN: 83,
 
   // ── 角色（Tiny Dungeon，+132 偏移）──
-  HERO: 232,
+  HERO: 217, // Tiny Dungeon d85：橙发青年，有腿
   CREATURE_GREEN: 240,
   CREATURE_ORANGE: 241,
   CREATURE_RED: 242,
