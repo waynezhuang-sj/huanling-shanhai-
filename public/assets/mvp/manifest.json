@@ -1,0 +1,258 @@
+{
+  "tileSize": 16,
+  "sheets": {
+    "tiles": {
+      "file": "tiles.png",
+      "frameW": 16,
+      "frameH": 16,
+      "cols": 12,
+      "count": 33,
+      "names": [
+        "grass_plain",
+        "grass_tuft",
+        "grass_flower",
+        "path_center",
+        "path_left",
+        "path_right",
+        "water_0",
+        "water_1",
+        "tree_round",
+        "tree_pointed",
+        "tree_autumn",
+        "bush_0",
+        "bush_1",
+        "bush_2",
+        "flower",
+        "mushroom",
+        "rock_0",
+        "rock_1",
+        "roof_left",
+        "roof_middle",
+        "roof_right",
+        "wall_left",
+        "wall_middle",
+        "wall_right",
+        "door_open",
+        "door_closed",
+        "window_0",
+        "window_1",
+        "fence_left",
+        "fence_middle",
+        "fence_right",
+        "sign",
+        "crate"
+      ]
+    },
+    "hero": {
+      "file": "hero.png",
+      "frameW": 16,
+      "frameH": 24,
+      "cols": 4,
+      "count": 12,
+      "layout": "4列×3行，行优先索引；每方向连续3帧：0-2下、3-5左、6-8右、9-11上",
+      "directions": {
+        "down": [
+          0,
+          1,
+          2
+        ],
+        "left": [
+          3,
+          4,
+          5
+        ],
+        "right": [
+          6,
+          7,
+          8
+        ],
+        "up": [
+          9,
+          10,
+          11
+        ]
+      },
+      "names": [
+        "down_idle",
+        "down_step_left",
+        "down_step_right",
+        "left_idle",
+        "left_step_left",
+        "left_step_right",
+        "right_idle",
+        "right_step_left",
+        "right_step_right",
+        "up_idle",
+        "up_step_left",
+        "up_step_right"
+      ]
+    },
+    "npc": {
+      "file": "npc.png",
+      "frameW": 16,
+      "frameH": 24,
+      "cols": 3,
+      "count": 3,
+      "names": [
+        "healer",
+        "merchant",
+        "villager"
+      ]
+    },
+    "creatures": {
+      "file": "creatures.png",
+      "frameW": 64,
+      "frameH": 64,
+      "cols": 2,
+      "count": 4,
+      "names": [
+        "lushu",
+        "chiru",
+        "huan",
+        "shimei"
+      ],
+      "elements": [
+        "wood",
+        "water",
+        "fire",
+        "earth"
+      ]
+    }
+  },
+  "tiles": {
+    "grass": [
+      0,
+      1,
+      2
+    ],
+    "path": [
+      3,
+      4,
+      5
+    ],
+    "water": [
+      6,
+      7
+    ],
+    "tree": [
+      8,
+      9,
+      10
+    ],
+    "bush": [
+      11,
+      12,
+      13
+    ],
+    "flower": 14,
+    "mushroom": 15,
+    "rock": [
+      16,
+      17
+    ],
+    "roofL": 18,
+    "roofM": 19,
+    "roofR": 20,
+    "wallL": 21,
+    "wallM": 22,
+    "wallR": 23,
+    "door": [
+      24,
+      25
+    ],
+    "window": [
+      26,
+      27
+    ],
+    "fenceL": 28,
+    "fenceM": 29,
+    "fenceR": 30,
+    "sign": 31,
+    "crate": 32
+  },
+  "ui": {
+    "file": "ui.png",
+    "width": 256,
+    "height": 128,
+    "parts": {
+      "dialog": [
+        0,
+        0,
+        96,
+        48
+      ],
+      "button": [
+        104,
+        0,
+        64,
+        24
+      ],
+      "hpBack": [
+        104,
+        32,
+        80,
+        12
+      ],
+      "hpFill": [
+        108,
+        52,
+        72,
+        4
+      ],
+      "joystickBase": [
+        0,
+        64,
+        48,
+        48
+      ],
+      "joystickThumb": [
+        56,
+        76,
+        24,
+        24
+      ]
+    },
+    "nineSlice": {
+      "dialog": {
+        "left": 3,
+        "right": 3,
+        "top": 3,
+        "bottom": 3
+      },
+      "button": {
+        "left": 3,
+        "right": 3,
+        "top": 3,
+        "bottom": 3
+      }
+    },
+    "hpFillInset": [
+      4,
+      4
+    ]
+  },
+  "preview": {
+    "file": "contact_sheet.png",
+    "width": 1200,
+    "height": 1120
+  },
+  "palette": [
+    "#00000000",
+    "#2f2632",
+    "#57404a",
+    "#8b5a48",
+    "#b9845b",
+    "#d9ad72",
+    "#f2d8b5",
+    "#fff0ce",
+    "#af4147",
+    "#eb6b4c",
+    "#719c58",
+    "#416a4c",
+    "#9ec76e",
+    "#536b86",
+    "#84a4b7",
+    "#a3a29a"
+  ],
+  "indexing": "zero-based, row-major; unused tile cells 33-35 are transparent"
+}

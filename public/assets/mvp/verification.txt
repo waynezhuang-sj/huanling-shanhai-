@@ -1,0 +1,96 @@
+MVP ASSET VERIFICATION (Pillow; actual on-disk PNGs)
+OPEN tiles.png: PNG 192x48 OK
+  grid=12x3, frame=16x16, count=33, colors=16 <=16 OK
+  tiles[00] grass_plain: alpha=100.00% OK
+  tiles[01] grass_tuft: alpha=100.00% OK
+  tiles[02] grass_flower: alpha=100.00% OK
+  tiles[03] path_center: alpha=100.00% OK
+  tiles[04] path_left: alpha=100.00% OK
+  tiles[05] path_right: alpha=100.00% OK
+  tiles[06] water_0: alpha=100.00% OK
+  tiles[07] water_1: alpha=100.00% OK
+  tiles[08] tree_round: alpha=85.16% OK
+  tiles[09] tree_pointed: alpha=57.42% OK
+  tiles[10] tree_autumn: alpha=56.64% OK
+  tiles[11] bush_0: alpha=63.28% OK
+  tiles[12] bush_1: alpha=55.08% OK
+  tiles[13] bush_2: alpha=71.48% OK
+  tiles[14] flower: alpha=23.83% OK
+  tiles[15] mushroom: alpha=57.03% OK
+  tiles[16] rock_0: alpha=42.97% OK
+  tiles[17] rock_1: alpha=34.38% OK
+  tiles[18] roof_left: alpha=100.00% OK
+  tiles[19] roof_middle: alpha=100.00% OK
+  tiles[20] roof_right: alpha=100.00% OK
+  tiles[21] wall_left: alpha=100.00% OK
+  tiles[22] wall_middle: alpha=100.00% OK
+  tiles[23] wall_right: alpha=100.00% OK
+  tiles[24] door_open: alpha=65.62% OK
+  tiles[25] door_closed: alpha=100.00% OK
+  tiles[26] window_0: alpha=100.00% OK
+  tiles[27] window_1: alpha=100.00% OK
+  tiles[28] fence_left: alpha=54.30% OK
+  tiles[29] fence_middle: alpha=61.72% OK
+  tiles[30] fence_right: alpha=54.30% OK
+  tiles[31] sign: alpha=64.84% OK
+  tiles[32] crate: alpha=60.94% OK
+  tiles[33]: unused transparent cell OK
+  tiles[34]: unused transparent cell OK
+  tiles[35]: unused transparent cell OK
+OPEN hero.png: PNG 64x72 OK
+  grid=4x3, frame=16x24, count=12, colors=9 <=16 OK
+  hero[00] down_idle: alpha=47.40% OK
+  hero[01] down_step_left: alpha=47.40% OK
+  hero[02] down_step_right: alpha=47.40% OK
+  hero[03] left_idle: alpha=49.48% OK
+  hero[04] left_step_left: alpha=49.48% OK
+  hero[05] left_step_right: alpha=49.48% OK
+  hero[06] right_idle: alpha=49.48% OK
+  hero[07] right_step_left: alpha=49.48% OK
+  hero[08] right_step_right: alpha=49.48% OK
+  hero[09] up_idle: alpha=49.48% OK
+  hero[10] up_step_left: alpha=49.48% OK
+  hero[11] up_step_right: alpha=49.48% OK
+OPEN npc.png: PNG 48x24 OK
+  grid=3x1, frame=16x24, count=3, colors=14 <=16 OK
+  npc[00] healer: alpha=54.69% OK
+  npc[01] merchant: alpha=53.12% OK
+  npc[02] villager: alpha=50.00% OK
+OPEN creatures.png: PNG 128x128 OK
+  grid=2x2, frame=64x64, count=4, colors=13 <=16 OK
+  creatures[00] lushu: alpha=26.83% OK
+  creatures[01] chiru: alpha=29.37% OK
+  creatures[02] huan: alpha=36.04% OK
+  creatures[03] shimei: alpha=46.22% OK
+SEMANTICS: all tile/NPC/creature indices match the task OK
+CREATURE 0: bbox=(5,6,59,55), 4px margin, outline, colors=9 OK
+CREATURE 1: bbox=(5,11,60,54), 4px margin, outline, colors=6 OK
+CREATURE 2: bbox=(5,8,60,54), 4px margin, outline, colors=6 OK
+CREATURE 3: bbox=(5,6,59,58), 4px margin, outline, colors=7 OK
+CREATURE DIFF 0/1: 37.50% >10% OK
+CREATURE DIFF 0/2: 35.74% >10% OK
+CREATURE DIFF 0/3: 49.54% >10% OK
+CREATURE DIFF 1/2: 40.70% >10% OK
+CREATURE DIFF 1/3: 49.85% >10% OK
+CREATURE DIFF 2/3: 53.05% >10% OK
+HERO FIRST 0/3: different OK
+HERO FIRST 0/6: different OK
+HERO FIRST 0/9: different OK
+HERO FIRST 3/6: different OK
+HERO FIRST 3/9: different OK
+HERO FIRST 6/9: different OK
+HERO down: 3 distinct poses OK
+HERO left: 3 distinct poses OK
+HERO right: 3 distinct poses OK
+HERO up: 3 distinct poses OK
+OPEN ui.png: PNG 256x128 OK
+  ui.dialog [0,0,96,48]: alpha=99.91% OK
+  ui.button [104,0,64,24]: alpha=99.74% OK
+  ui.hpBack [104,32,80,12]: alpha=99.58% OK
+  ui.hpFill [108,52,72,4]: alpha=100.00% OK
+  ui.joystickBase [0,64,48,48]: alpha=84.20% OK
+  ui.joystickThumb [56,76,24,24]: alpha=82.64% OK
+UI: all 6 rectangles in bounds and disjoint; dialog/button nine-slice borders OK
+OPEN contact_sheet.png: PNG 1200x1120 OK
+  contact_sheet: alpha=100.00% OK
+PASS: 6 PNG files opened; 52 sprite frames + 6 UI parts verified; all assertions passed.

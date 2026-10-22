@@ -1,0 +1,17 @@
+{
+  "tiny-town": {
+    "page": "https://kenney.nl/assets/tiny-town",
+    "download": "https://kenney.nl/media/pages/assets/tiny-town/a415fbeb49-1735736916/kenney_tiny-town.zip",
+    "sha256": "9768692dccff1d706408a5aedd6ca4f6cd1409506cbc84cb2f862919764be977"
+  },
+  "tiny-dungeon": {
+    "page": "https://kenney.nl/assets/tiny-dungeon",
+    "download": "https://kenney.nl/media/pages/assets/tiny-dungeon/f8422efb44-1674742415/kenney_tiny-dungeon.zip",
+    "sha256": "c109438ab06f65fd80f9b2686a4cf9c7c11dc64444b47333ec71d602f8bb5fc7"
+  },
+  "ui-pack-pixel-adventure": {
+    "page": "https://kenney.nl/assets/ui-pack-pixel-adventure",
+    "download": "https://kenney.nl/media/pages/assets/ui-pack-pixel-adventure/405ba5278a-1729196257/kenney_ui-pack-pixel-adventure.zip",
+    "sha256": "0b0ed4802ebcfff5e44e370f394baa1d751862a5a4a7612ac4ce84e85faa0627"
+  }
+}
