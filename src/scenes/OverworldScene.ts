@@ -4,6 +4,7 @@ import UIScene from './UIScene';
 import { rollWild } from '../battle/engine';
 import { WILD_TABLE } from '../data/creatures';
 import { healAll } from '../state/party';
+import { NPCS, type NpcDef } from '../data/npcs';
 
 const SPEED = 84;
 const TS = 16;
@@ -22,6 +23,8 @@ export default class OverworldScene extends Phaser.Scene {
   private virtual = { x: 0, y: 0 };
   private battleActive = false;
   private stepCounter = 0;
+  private npcSprites: { sprite: Phaser.GameObjects.Sprite; def: NpcDef }[] = [];
+  private nearNpc: NpcDef | null = null;
   private moving = false;
 
   constructor() {
@@ -70,6 +73,33 @@ export default class OverworldScene extends Phaser.Scene {
     this.player.setOffset(3, 8);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.layer);
+
+    // ── NPC ──
+    this.npcSprites = [];
+    for (const n of NPCS.filter((n) => n.map === this.mapDef.id)) {
+      const sx = n.x * TS + TS / 2;
+      const sy = n.y * TS + TS / 2;
+      const s = this.physics.add.sprite(sx, sy, 'atlas', n.frame).setDepth(3);
+      const b = s.body as Phaser.Physics.Arcade.Body;
+      b.setSize(10, 8).setOffset(3, 8).setImmovable(true);
+      this.physics.add.collider(this.player, s);
+      s.setInteractive({ useHandCursor: true });
+      s.on('pointerdown', () => {
+        const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, sx, sy);
+        if (d <= 30) {
+          this.nearNpc = n;
+          this.tryTalk();
+        } else {
+          this.ui?.setPrompt('走近一些才能交谈');
+          this.time.delayedCall(1000, () => this.ui?.setPrompt(''));
+        }
+      });
+      this.npcSprites.push({ sprite: s, def: n });
+    }
+
+    // 交谈键
+    this.input.keyboard?.on('keydown-E', () => this.tryTalk());
+    this.input.keyboard?.on('keydown-SPACE', () => this.tryTalk());
 
     // ── 镜头 ──
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
@@ -131,6 +161,21 @@ export default class OverworldScene extends Phaser.Scene {
     if (new URLSearchParams(window.location.search).has('battle')) {
       this.scene.launch('Battle', { enemy: rollWild(WILD_TABLE) });
     }
+
+    // 调试入口：?dialog=healer / merchant / villager 直接打开对话
+    const q = new URLSearchParams(window.location.search);
+    if (q.has('dialog')) {
+      const id = q.get('dialog') || 'villager';
+      const npc = NPCS.find((n) => n.id === id);
+      if (npc) this.scene.launch('Dialog', { npc });
+    }
+  }
+
+  /** 与最近的 NPC 交谈 */
+  private tryTalk() {
+    if (this.battleActive || this.switching || !this.nearNpc) return;
+    this.scene.pause();
+    this.scene.launch('Dialog', { npc: this.nearNpc });
   }
 
   /** 野区遇敌：暂停探索，启动战斗场景 */
@@ -194,6 +239,21 @@ export default class OverworldScene extends Phaser.Scene {
 
     // 影子跟随
     this.shadow.setPosition(this.player.x, this.player.y + 7);
+
+    // ── 靠近 NPC 提示 ──
+    if (this.npcSprites.length) {
+      let best: NpcDef | null = null;
+      let bestD = 28;
+      for (const { sprite, def } of this.npcSprites) {
+        const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, sprite.x, sprite.y);
+        if (d < bestD) {
+          bestD = d;
+          best = def;
+        }
+      }
+      this.nearNpc = best;
+      this.ui?.setPrompt(best ? `${best.name}　·　按 E 交谈` : '');
+    }
 
     // ── 传送点：按距离判定（每帧检查，容错 12px）──
     if (!this.switching && !this.battleActive) {

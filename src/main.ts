@@ -16,6 +16,7 @@ import BootScene from './scenes/BootScene';
 import OverworldScene from './scenes/OverworldScene';
 import UIScene from './scenes/UIScene';
 import BattleScene from './scenes/BattleScene';
+import DialogScene from './scenes/DialogScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -35,7 +36,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [BootScene, OverworldScene, UIScene, BattleScene],
+  scene: [BootScene, OverworldScene, UIScene, BattleScene, DialogScene],
 };
 
 new Phaser.Game(config);

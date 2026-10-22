@@ -4,6 +4,7 @@ import Phaser from 'phaser';
 export default class UIScene extends Phaser.Scene {
   private nameText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
+  private promptText!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'UI', active: false });
@@ -41,5 +42,23 @@ export default class UIScene extends Phaser.Scene {
 
   setMapName(name: string) {
     this.nameText.setText(name);
+  }
+
+  /** 靠近 NPC 时的提示（传空字符串隐藏） */
+  setPrompt(text: string) {
+    if (!this.promptText) {
+      this.promptText = this.add
+        .text(this.scale.width / 2, this.scale.height - 48, '', {
+          fontSize: '12px',
+          color: '#f0d9a8',
+          backgroundColor: '#0d1117dd',
+          padding: { x: 8, y: 4 },
+          fontFamily: '"PingFang SC", "Noto Sans SC", sans-serif',
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(11);
+    }
+    this.promptText.setText(text);
+    this.promptText.setVisible(text.length > 0);
   }
 }

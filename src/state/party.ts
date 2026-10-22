@@ -39,6 +39,26 @@ export function healAll(): void {
   for (const c of party) c.hp = c.maxHp;
 }
 
+// ── 钱包与背包 ──
+export const wallet = { coins: 120 };
+
+export interface BagItem {
+  id: string;
+  count: number;
+}
+
+export const bag: BagItem[] = [{ id: 'herb', count: 2 }];
+
+export function addItem(id: string, n = 1): void {
+  const it = bag.find((b) => b.id === id);
+  if (it) it.count += n;
+  else bag.push({ id, count: n });
+}
+
+export function countItem(id: string): number {
+  return bag.find((b) => b.id === id)?.count ?? 0;
+}
+
 /** 战斗胜利后是否有成员升级（返回描述） */
 export function levelUpTexts(names: string[], ups: number[]): string[] {
   const out: string[] = [];
