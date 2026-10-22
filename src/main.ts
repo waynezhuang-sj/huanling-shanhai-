@@ -39,4 +39,7 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [BootScene, OverworldScene, UIScene, BattleScene, DialogScene],
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+// 调试句柄（自动化测试用：读取场景状态、模拟输入）
+(window as unknown as { __game: Phaser.Game }).__game = game;

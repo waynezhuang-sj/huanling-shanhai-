@@ -61,4 +61,30 @@ export default class UIScene extends Phaser.Scene {
     this.promptText.setText(text);
     this.promptText.setVisible(text.length > 0);
   }
+
+  // ── 触屏摇杆可视化 ──
+  private joyBase?: Phaser.GameObjects.Arc;
+  private joyKnob?: Phaser.GameObjects.Arc;
+
+  showJoystick(ox: number, oy: number, kx: number, ky: number) {
+    if (!this.joyBase) {
+      this.joyBase = this.add
+        .circle(0, 0, 26, 0x000000, 0.3)
+        .setStrokeStyle(2, 0xffffff, 0.35)
+        .setDepth(20)
+        .setVisible(false);
+      this.joyKnob = this.add.circle(0, 0, 10, 0xffffff, 0.5).setDepth(21).setVisible(false);
+    }
+    this.joyBase.setPosition(ox, oy).setVisible(true);
+    const dx = kx - ox;
+    const dy = ky - oy;
+    const len = Math.hypot(dx, dy) || 1;
+    const s = Math.min(len, 26) / len;
+    this.joyKnob!.setPosition(ox + dx * s, oy + dy * s).setVisible(true);
+  }
+
+  hideJoystick() {
+    this.joyBase?.setVisible(false);
+    this.joyKnob?.setVisible(false);
+  }
 }

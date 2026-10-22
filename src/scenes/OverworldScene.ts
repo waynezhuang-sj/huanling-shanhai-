@@ -137,28 +137,39 @@ export default class OverworldScene extends Phaser.Scene {
       Phaser.Input.Keyboard.Key
     >;
 
-    // ── 触屏摇杆 ──
-    const setVirtual = (pointer: Phaser.Input.Pointer) => {
-      const cx = this.scale.width / 2;
-      const cy = this.scale.height / 2;
-      const dx = pointer.x - cx;
-      const dy = pointer.y - cy;
+    // ── 触屏摇杆：按下即定向（相对屏幕中心），拖动后改为「以按下点为原点」──
+    let joyOrigin: { x: number; y: number } | null = null;
+    const DEAD = 10;
+
+    const applyDir = (dx: number, dy: number) => {
       const len = Math.hypot(dx, dy);
-      if (len < 24) {
+      if (len < DEAD) {
         this.virtual.x = 0;
         this.virtual.y = 0;
-        return;
+      } else {
+        this.virtual.x = dx / len;
+        this.virtual.y = dy / len;
       }
-      this.virtual.x = dx / len;
-      this.virtual.y = dy / len;
     };
-    this.input.on('pointerdown', setVirtual);
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (p.isDown) setVirtual(p);
+
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      joyOrigin = { x: p.x, y: p.y };
+      // 按下瞬间先按「相对屏幕中心」定向，保证点哪都能立刻动
+      applyDir(p.x - this.scale.width / 2, p.y - this.scale.height / 2);
+      this.ui?.showJoystick(p.x, p.y, p.x, p.y);
     });
+
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (!joyOrigin || !p.isDown) return;
+      applyDir(p.x - joyOrigin.x, p.y - joyOrigin.y);
+      this.ui?.showJoystick(joyOrigin.x, joyOrigin.y, p.x, p.y);
+    });
+
     this.input.on('pointerup', () => {
+      joyOrigin = null;
       this.virtual.x = 0;
       this.virtual.y = 0;
+      this.ui?.hideJoystick();
     });
 
     // ── UI ──
