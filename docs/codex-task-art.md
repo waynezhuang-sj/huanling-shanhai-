@@ -16,6 +16,7 @@
 | 截图验证 | `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --disable-gpu --no-sandbox --hide-scrollbars --window-size=960,640 --virtual-time-budget=12000 --screenshot=/tmp/shot.png "http://127.0.0.1:4173/"` |
 | 线上 | https://waynezhuang-sj.github.io/huanling-shanhai-/ （push 后自动部署） |
 | 网络 | 需要代理：`export HTTPS_PROXY=http://127.0.0.1:7890 HTTP_PROXY=http://127.0.0.1:7890` |
+| **沙箱** | **必须 `-s danger-full-access`**。`workspace-write` 下 macOS Seatbelt 会拦「绑定端口」和「启动 GUI 应用」，导致 http.server 报 `Operation not permitted`、Chrome 退出码 134 |
 
 ## 二、当前实现（不要推翻）
 

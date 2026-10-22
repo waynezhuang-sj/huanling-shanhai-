@@ -210,13 +210,21 @@ function buildTown(): MapDef {
   // 路牌
   obj[10][13] = TILE.SIGN;
 
+  // ⭐ 西侧出口：打通 3 格高、4 格深的缺口（否则被树林封死，走不到传送点）
+  for (let y = 10; y <= 12; y++) {
+    for (let x = 0; x <= 3; x++) {
+      obj[y][x] = -1;
+      ground[y][x] = TILE.PATH;
+    }
+  }
+
   return {
     id: 'town',
     name: '青丘镇',
     ground,
     objects: obj,
     spawn: { x: 14, y: 15 },
-    portals: [{ x: 0, y: 11, to: 'field', spawn: { x: 2, y: 13 } }],
+    portals: [{ x: 1, y: 11, to: 'field', spawn: { x: 2, y: 13 } }],
   };
 }
 
@@ -262,6 +270,14 @@ function buildField(): MapDef {
   obj[9][14] = TILE.MUSHROOM;
   obj[20][29] = TILE.MUSHROOM;
 
+  // ⭐ 西侧回城出口：打通缺口，保证能从野区走回镇上
+  for (let y = 11; y <= 13; y++) {
+    for (let x = 0; x <= 4; x++) {
+      obj[y][x] = -1;
+      ground[y][x] = TILE.PATH;
+    }
+  }
+
   return {
     id: 'field',
     name: '青丘野径',
@@ -269,7 +285,7 @@ function buildField(): MapDef {
     ground,
     objects: obj,
     spawn: { x: 5, y: 12 },
-    portals: [{ x: 0, y: 12, to: 'town', spawn: { x: 2, y: 11 } }],
+    portals: [{ x: 1, y: 12, to: 'town', spawn: { x: 2, y: 11 } }],
   };
 }
 

@@ -195,7 +195,27 @@ export default class OverworldScene extends Phaser.Scene {
     // 影子跟随
     this.shadow.setPosition(this.player.x, this.player.y + 7);
 
-    // ── 图块检测 ──
+    // ── 传送点：按距离判定（每帧检查，容错 12px）──
+    if (!this.switching && !this.battleActive) {
+      const px = this.player.x;
+      const py = this.player.y + 6;
+      const portal = this.mapDef.portals.find((p) => {
+        const cx = p.x * TS + TS / 2;
+        const cy = p.y * TS + TS / 2;
+        return Math.abs(px - cx) <= 12 && Math.abs(py - cy) <= 12;
+      });
+      if (portal) {
+        this.switching = true;
+        body.setVelocity(0, 0);
+        this.cameras.main.fadeOut(200, 0, 0, 0);
+        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+          this.scene.restart({ mapId: portal.to, spawn: portal.spawn });
+        });
+        return;
+      }
+    }
+
+    // ── 图块检测（用于遇敌计数）──
     const tx = Math.floor(this.player.x / TS);
     const ty = Math.floor((this.player.y + 6) / TS);
     const key = `${tx},${ty}`;
@@ -209,19 +229,8 @@ export default class OverworldScene extends Phaser.Scene {
         this.stepCounter = 0;
         if (Math.random() < 0.16) {
           this.startBattle();
-          return;
         }
       }
-    }
-
-    const portal = this.mapDef.portals.find((p) => p.x === tx && p.y === ty);
-    if (portal) {
-      this.switching = true;
-      body.setVelocity(0, 0);
-      this.cameras.main.fadeOut(200, 0, 0, 0);
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-        this.scene.restart({ mapId: portal.to, spawn: portal.spawn });
-      });
     }
   }
 }
