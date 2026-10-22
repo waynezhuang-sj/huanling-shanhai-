@@ -25,6 +25,7 @@ export default class OverworldScene extends Phaser.Scene {
   private stepCounter = 0;
   private npcSprites: { sprite: Phaser.GameObjects.Sprite; def: NpcDef }[] = [];
   private nearNpc: NpcDef | null = null;
+  private portalArmed = false;
   private moving = false;
 
   constructor() {
@@ -51,6 +52,20 @@ export default class OverworldScene extends Phaser.Scene {
     const groundLayer = map.createBlankLayer('ground', tileset)!;
     groundLayer.putTilesAt(this.mapDef.ground, 0, 0);
 
+    // 美术投影独立于物件与碰撞，透明处仍显示原地面。
+    const shade = this.add.graphics().setDepth(1);
+    shade.fillStyle(0x263329, 0.22);
+    for (const house of this.mapDef.houses) {
+      shade.fillRect(house.x * TS + 3, house.y * TS + 4, house.width * TS, house.height * TS);
+    }
+    this.mapDef.objects.forEach((row, y) => row.forEach((tile, x) => {
+      if (([TILE.TREE_ROUND, TILE.TREE_ROUND2, TILE.TREE_LEAFY, TILE.TREE_AUTUMN] as number[]).includes(tile)) {
+        shade.fillEllipse(x * TS + 9, y * TS + 14, 14, 5);
+      } else if (([TILE.FENCE_L, TILE.FENCE_M, TILE.FENCE_R] as number[]).includes(tile)) {
+        shade.fillRect(x * TS + 2, y * TS + 11, TS, 4);
+      }
+    }));
+
     this.layer = map.createBlankLayer('objects', tileset)!;
     this.mapDef.objects.forEach((row, y) =>
       row.forEach((t, x) => {
@@ -59,6 +74,13 @@ export default class OverworldScene extends Phaser.Scene {
     );
     this.layer.setCollision([...SOLID]);
     this.layer.setDepth(2);
+
+    // 第四行屋顶的下沿是檐口：只加 2px 半透明压边，不替换图集。
+    const eaves = this.add.graphics().setDepth(2.1);
+    eaves.fillStyle(0x30252a, 0.3);
+    for (const house of this.mapDef.houses) {
+      eaves.fillRect(house.x * TS, (house.y + 4) * TS - 2, house.width * TS, 2);
+    }
 
     // ── 玩家 ──
     const spawn = this.spawnTile();
@@ -255,23 +277,28 @@ export default class OverworldScene extends Phaser.Scene {
       this.ui?.setPrompt(best ? `${best.name}　·　按 E 交谈` : '');
     }
 
-    // ── 传送点：按距离判定（每帧检查，容错 12px）──
+    // ── 传送点：按距离判定 + 到达保护（必须先离开再回来才生效）──
     if (!this.switching && !this.battleActive) {
       const px = this.player.x;
       const py = this.player.y + 6;
-      const portal = this.mapDef.portals.find((p) => {
-        const cx = p.x * TS + TS / 2;
-        const cy = p.y * TS + TS / 2;
-        return Math.abs(px - cx) <= 12 && Math.abs(py - cy) <= 12;
-      });
-      if (portal) {
-        this.switching = true;
-        body.setVelocity(0, 0);
-        this.cameras.main.fadeOut(200, 0, 0, 0);
-        this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-          this.scene.restart({ mapId: portal.to, spawn: portal.spawn });
-        });
-        return;
+      const within = (p: { x: number; y: number }, r: number) =>
+        Math.abs(px - (p.x * TS + TS / 2)) <= r && Math.abs(py - (p.y * TS + TS / 2)) <= r;
+
+      if (!this.portalArmed) {
+        // 刚落地：先离开传送区 20px 以外，才允许再次触发，避免被瞬间弹回
+        if (!this.mapDef.portals.some((p) => within(p, 20))) this.portalArmed = true;
+      } else {
+        const portal = this.mapDef.portals.find((p) => within(p, 12));
+        if (portal) {
+          this.switching = true;
+          this.portalArmed = false;
+          body.setVelocity(0, 0);
+          this.cameras.main.fadeOut(200, 0, 0, 0);
+          this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            this.scene.restart({ mapId: portal.to, spawn: portal.spawn });
+          });
+          return;
+        }
       }
     }
 

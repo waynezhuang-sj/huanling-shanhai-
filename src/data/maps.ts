@@ -9,6 +9,18 @@ export const TILE = {
   GRASS: 0,
   GRASS2: 1,
   PATH: 25, // 最干净的土路（无边框、无杂点）
+  PATH_NW: 12,
+  PATH_N: 13,
+  PATH_NE: 14,
+  PATH_W: 24,
+  PATH_E: 26,
+  PATH_SW: 36,
+  PATH_S: 37,
+  PATH_SE: 38,
+  PATH_IN_NW: 39,
+  PATH_IN_NE: 40,
+  PATH_IN_SW: 42,
+  PATH_IN_SE: 41,
 
   // ── 覆盖物（放物件层，背景透明）──
   FLOWER: 2,
@@ -36,6 +48,16 @@ export const TILE = {
   DOOR: 85,
   WINDOW: 55,
   SIGN: 83,
+  // 原映射保留。52-55 实际是红屋顶上沿/天窗，不能再当墙面使用。
+  ROOF_RED_CAP: [52, 53, 54],
+  ROOF_RED_TILE: [64, 65, 66],
+  ROOF_BLUE_CAP: [48, 49, 50],
+  ROOF_BLUE_TILE: [60, 61, 62],
+  WALL_RED: [72, 73, 75],
+  WALL_BLUE: [76, 77, 79],
+  WALL_WINDOW_RED: 84,
+  WALL_WINDOW_BLUE: 88,
+  WALL_DOOR_BLUE: 89,
 
   // ── 角色（Tiny Dungeon，+132 偏移）──
   HERO: 217, // Tiny Dungeon d85：橙发青年，有腿
@@ -71,6 +93,15 @@ export const SOLID: number[] = [
   TILE.DOOR,
   TILE.WINDOW,
   TILE.SIGN,
+  ...TILE.ROOF_RED_CAP,
+  ...TILE.ROOF_RED_TILE,
+  ...TILE.ROOF_BLUE_CAP,
+  ...TILE.ROOF_BLUE_TILE,
+  ...TILE.WALL_RED,
+  ...TILE.WALL_BLUE,
+  TILE.WALL_WINDOW_RED,
+  TILE.WALL_WINDOW_BLUE,
+  TILE.WALL_DOOR_BLUE,
 ];
 
 export interface Portal {
@@ -86,6 +117,7 @@ export interface MapDef {
   wild?: boolean;
   ground: number[][];
   objects: number[][];
+  houses: { x: number; y: number; width: number; height: number }[];
   spawn: { x: number; y: number };
   portals: Portal[];
 }
@@ -110,27 +142,39 @@ function rng(seed: number) {
   };
 }
 
-/** 房子：屋脊 + 屋顶 + 两层墙 + 窗 + 门（共 4 行高） */
-function house(obj: number[][], x0: number, y0: number, w: number, doorOffset: number) {
-  // 屋脊
-  const mid = x0 + Math.floor(w / 2);
-  obj[y0][mid] = TILE.ROOF_TOP;
+/** 屋脊 + 两行瓦 + 檐口 + 两行墙；同色墙、窗、门按完整横排拼接。 */
+function house(obj: number[][], x0: number, y0: number, w: number, blue = false) {
+  const cap = blue ? TILE.ROOF_BLUE_CAP : TILE.ROOF_RED_CAP;
+  const roof = blue ? TILE.ROOF_BLUE_TILE : TILE.ROOF_RED_TILE;
+  const wall = blue ? TILE.WALL_BLUE : TILE.WALL_RED;
+  for (let y = 0; y < 6; y++) {
+    const tiles = y === 0 ? cap : y <= 3 ? roof : wall;
+    for (let x = 0; x < w; x++) {
+      obj[y0 + y][x0 + x] = tiles[x === 0 ? 0 : x === w - 1 ? 2 : 1];
+    }
+  }
+  obj[y0 + 4][x0 + 1] = blue ? TILE.WALL_WINDOW_BLUE : TILE.WALL_WINDOW_RED;
+  obj[y0 + 4][x0 + w - 2] = blue ? TILE.WALL_WINDOW_BLUE : TILE.WALL_WINDOW_RED;
+  obj[y0 + 5][x0 + Math.floor(w / 2)] = blue ? TILE.WALL_DOOR_BLUE : TILE.DOOR;
+  return { x: x0, y: y0, width: w, height: 6 };
+}
 
-  // 屋顶
-  for (let i = 0; i < w; i++) {
-    obj[y0 + 1][x0 + i] = i === 0 ? TILE.ROOF_L : i === w - 1 ? TILE.ROOF_R : TILE.ROOF_M;
-  }
-  // 上层墙
-  for (let i = 0; i < w; i++) {
-    obj[y0 + 2][x0 + i] = i === 0 ? TILE.WALL_L : i === w - 1 ? TILE.WALL_R : TILE.WALL_M;
-  }
-  obj[y0 + 2][x0 + 1] = TILE.WINDOW;
-  if (w >= 5) obj[y0 + 2][x0 + w - 2] = TILE.WINDOW;
-  // 下层墙 + 门
-  for (let i = 0; i < w; i++) {
-    obj[y0 + 3][x0 + i] = i === 0 ? TILE.WALL_L : i === w - 1 ? TILE.WALL_R : TILE.WALL_M;
-  }
-  obj[y0 + 3][x0 + doorOffset] = TILE.DOOR;
+/** 仅替换道路边界，中心继续使用已确认的干净土路 25；交叉口保留连通。 */
+function edgePaths(ground: number[][]) {
+  const path = ground.map((row) => row.map((tile) => tile === TILE.PATH));
+  const has = (x: number, y: number) => path[y]?.[x] ?? false;
+  path.forEach((row, y) => row.forEach((isPath, x) => {
+    if (!isPath) return;
+    const n = has(x, y - 1), s = has(x, y + 1);
+    const w = has(x - 1, y), e = has(x + 1, y);
+    ground[y][x] = !n ? (!w ? TILE.PATH_NW : !e ? TILE.PATH_NE : TILE.PATH_N)
+      : !s ? (!w ? TILE.PATH_SW : !e ? TILE.PATH_SE : TILE.PATH_S)
+      : !w ? TILE.PATH_W : !e ? TILE.PATH_E
+      : !has(x - 1, y - 1) ? TILE.PATH_IN_NW
+      : !has(x + 1, y - 1) ? TILE.PATH_IN_NE
+      : !has(x - 1, y + 1) ? TILE.PATH_IN_SW
+      : !has(x + 1, y + 1) ? TILE.PATH_IN_SE : TILE.PATH;
+  }));
 }
 
 /** 一排连起来的栅栏 */
@@ -140,7 +184,7 @@ function fenceRow(obj: number[][], x0: number, x1: number, y: number) {
   }
 }
 
-/** 一片树丛（品种随机混用，避免呆板） */
+/** 连续树群：内部填满，边缘渐疏；完整树帧不变，同片以一种树为主。 */
 function grove(
   obj: number[][],
   r: () => number,
@@ -149,11 +193,15 @@ function grove(
   x1: number,
   y1: number
 ) {
+  const dominant = r() < 0.5 ? TILE.TREE_ROUND : TILE.TREE_LEAFY;
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
       if (!obj[y] || obj[y][x] === undefined) continue;
-      const roll = r();
-      obj[y][x] = TREES[Math.floor(r() * TREES.length)];
+      if (obj[y][x] !== -1) continue;
+      const boundary = x === 0 || y === 0 || x === obj[0].length - 1 || y === obj.length - 1;
+      const edge = x === x0 || x === x1 || y === y0 || y === y1;
+      if (!boundary && edge && r() < 0.3) continue;
+      obj[y][x] = r() < 0.85 ? dominant : TILE.TREE_ROUND2;
     }
   }
 }
@@ -174,15 +222,14 @@ function buildTown(): MapDef {
   rect(ground, 0, 11, w - 1, 12, TILE.PATH);
   rect(ground, 14, 0, 15, h - 1, TILE.PATH);
 
-  // 两栋房子（4 行高）
-  house(obj, 3, 3, 7, 3); // 医馆
-  house(obj, 20, 3, 7, 3); // 杂货铺
+  // 六行建筑落到 y=5 为止，保留 y=6 的医馆 / 商店 NPC 与门前通道。
+  const houses = [house(obj, 3, 0, 7), house(obj, 21, 0, 5, true)];
 
   // 外围树林
-  grove(obj, r, 0, 0, w - 1, 0);
-  grove(obj, r, 0, h - 1, w - 1, h - 1);
-  grove(obj, r, 0, 0, 0, h - 1);
-  grove(obj, r, w - 1, 0, w - 1, h - 1);
+  grove(obj, r, 0, 0, w - 1, 1);
+  grove(obj, r, 0, h - 3, w - 1, h - 1);
+  grove(obj, r, 0, 0, 1, h - 1);
+  grove(obj, r, w - 2, 0, w - 1, h - 1);
 
   // 镇内树丛
   grove(obj, r, 2, 9, 4, 10);
@@ -190,9 +237,9 @@ function buildTown(): MapDef {
   grove(obj, r, 2, 17, 5, 19);
   grove(obj, r, 24, 17, 27, 19);
 
-  // 树丛点缀
-  for (const [x, y] of [[7, 10], [19, 10], [11, 7], [18, 7], [10, 16], [20, 16]] as [number, number][])
-    obj[y][x] = TREES[Math.floor(r() * TREES.length)];
+  // 小片树林替代单棵散点，保留路口与房屋前的通行空间。
+  grove(obj, r, 9, 16, 11, 18);
+  grove(obj, r, 19, 16, 21, 18);
   // 花
   for (const [x, y] of [[6, 9], [21, 9], [12, 18], [17, 6]] as [number, number][]) obj[y][x] = TILE.FLOWER;
   obj[19][8] = TILE.MUSHROOM;
@@ -217,14 +264,16 @@ function buildTown(): MapDef {
       ground[y][x] = TILE.PATH;
     }
   }
+  edgePaths(ground);
 
   return {
     id: 'town',
     name: '青丘镇',
     ground,
     objects: obj,
+    houses,
     spawn: { x: 14, y: 15 },
-    portals: [{ x: 1, y: 11, to: 'field', spawn: { x: 2, y: 13 } }],
+    portals: [{ x: 1, y: 11, to: 'field', spawn: { x: 33, y: 13 } }],
   };
 }
 
@@ -241,13 +290,14 @@ function buildField(): MapDef {
     for (let x = 1; x < w - 1; x++) if (r() > 0.3) ground[y][x] = TILE.GRASS2;
 
   // 入口小路
-  rect(ground, 0, 12, 8, 13, TILE.PATH);
+  // 入口小路（东侧进入，往西通向腹地）
+  rect(ground, w - 6, 12, w - 1, 14, TILE.PATH);
 
   // 外围树林
-  grove(obj, r, 0, 0, w - 1, 0);
-  grove(obj, r, 0, h - 1, w - 1, h - 1);
-  grove(obj, r, 0, 0, 0, h - 1);
-  grove(obj, r, w - 1, 0, w - 1, h - 1);
+  grove(obj, r, 0, 0, w - 1, 2);
+  grove(obj, r, 0, h - 3, w - 1, h - 1);
+  grove(obj, r, 0, 0, 2, h - 1);
+  grove(obj, r, w - 3, 0, w - 1, h - 1);
 
   // 四片树林围出通道
   grove(obj, r, 11, 2, 19, 8);
@@ -255,11 +305,9 @@ function buildField(): MapDef {
   grove(obj, r, 13, 17, 23, 25);
   grove(obj, r, 27, 15, 35, 21);
 
-  // 灌木
-  for (const [x, y] of [
-    [10, 11], [20, 12], [25, 10], [9, 17], [12, 11], [18, 16], [26, 11], [32, 10], [31, 23], [15, 11],
-  ] as [number, number][])
-    if (obj[y][x] === -1) obj[y][x] = TREES[Math.floor(r() * TREES.length)];
+  // 树群边缘小片延伸，避开入口通道。
+  grove(obj, r, 18, 10, 20, 12);
+  grove(obj, r, 29, 9, 32, 11);
 
   // 小草 / 蘑菇 / 花
   for (let i = 0; i < 18; i++) {
@@ -270,13 +318,29 @@ function buildField(): MapDef {
   obj[9][14] = TILE.MUSHROOM;
   obj[20][29] = TILE.MUSHROOM;
 
-  // ⭐ 西侧回城出口：打通缺口，保证能从野区走回镇上
-  for (let y = 11; y <= 13; y++) {
-    for (let x = 0; x <= 4; x++) {
+  // ⭐ 东侧入口：从镇上往西走 → 应从野区「东边」进入（地理方向连贯）
+  for (let y = 12; y <= 14; y++) {
+    for (let x = w - 5; x <= w - 1; x++) {
       obj[y][x] = -1;
       ground[y][x] = TILE.PATH;
     }
   }
+  // 东入口向内引一条小路，接入腹地
+  for (let x = 18; x <= w - 5; x++) {
+    for (let y = 12; y <= 14; y++) {
+      if (obj[y][x] !== -1) continue;
+      ground[y][x] = TILE.PATH;
+    }
+  }
+
+  // 西侧留一条死路小径（不设传送点，纯地形，避免玩家误以为能出去）
+  for (let y = 11; y <= 13; y++) {
+    for (let x = 0; x <= 3; x++) {
+      obj[y][x] = TREES[Math.floor(r() * TREES.length)];
+    }
+  }
+
+  edgePaths(ground);
 
   return {
     id: 'field',
@@ -284,8 +348,9 @@ function buildField(): MapDef {
     wild: true,
     ground,
     objects: obj,
-    spawn: { x: 5, y: 12 },
-    portals: [{ x: 1, y: 12, to: 'town', spawn: { x: 2, y: 11 } }],
+    houses: [],
+    spawn: { x: 18, y: 13 },
+    portals: [{ x: w - 2, y: 13, to: 'town', spawn: { x: 3, y: 11 } }],
   };
 }
 
