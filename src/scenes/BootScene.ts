@@ -10,7 +10,7 @@ import Phaser from 'phaser';
  */
 export default class BootScene extends Phaser.Scene {
   preload() {
-    this.load.spritesheet('atlas', 'assets/atlas.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.spritesheet('atlas', 'assets/atlas_shanhai.png', { frameWidth: 16, frameHeight: 16 });
     this.load.spritesheet('hero', 'assets/mvp/hero.png', { frameWidth: 16, frameHeight: 24 });
     this.load.spritesheet('npc', 'assets/mvp/npc.png', { frameWidth: 16, frameHeight: 24 });
     this.load.spritesheet('creatures', 'assets/mvp/creatures.png', { frameWidth: 64, frameHeight: 64 });
