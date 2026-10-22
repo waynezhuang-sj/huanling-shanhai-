@@ -8,23 +8,34 @@ export const TILE = {
   // ── 地面（只放地面层）──
   GRASS: 0,
   GRASS2: 1,
-  PATH: 13,
+  PATH: 40, // 干净土路，无边框，可平铺
 
   // ── 覆盖物（放物件层，背景透明）──
   FLOWER: 2,
-  TREE: 16,
-  BUSH: 19,
-  FENCE: 44,
-  // ── 建筑（带左/中/右变体）──
+  TREE_ROUND: 16,
+  TREE_PINE: 4,
+  TREE_PINE2: 19,
+  TREE_ROUND2: 5,
+  TREE_SMALL: 28,
+  SHRUB: 18,
+  MUSHROOM: 29,
+  BUSH: 30,
+
+  // ── 栅栏（左/中/右，连接成排）──
+  FENCE_L: 44,
+  FENCE_M: 45,
+  FENCE_R: 46,
+
+  // ── 建筑 ──
+  ROOF_TOP: 67,
   ROOF_L: 64,
   ROOF_M: 65,
   ROOF_R: 66,
   WALL_L: 52,
   WALL_M: 53,
   WALL_R: 54,
-  DOOR: 85, // 带门框的门
-  WINDOW: 55, // 砖墙上的窗
-  DOOR_BIG: 74,
+  DOOR: 85,
+  WINDOW: 55,
   SIGN: 83,
 
   // ── 角色（Tiny Dungeon，+132 偏移）──
@@ -37,11 +48,22 @@ export const TILE = {
   CREATURE_SPIDER: 254,
 } as const;
 
+const TREES = [
+  TILE.TREE_ROUND,
+  TILE.TREE_PINE,
+  TILE.TREE_ROUND2,
+  TILE.TREE_SMALL,
+  TILE.TREE_PINE2,
+];
+
 /** 走不过去的图块 */
 export const SOLID: number[] = [
-  TILE.TREE,
+  ...TREES,
   TILE.BUSH,
-  TILE.FENCE,
+  TILE.FENCE_L,
+  TILE.FENCE_M,
+  TILE.FENCE_R,
+  TILE.ROOF_TOP,
   TILE.ROOF_L,
   TILE.ROOF_M,
   TILE.ROOF_R,
@@ -64,9 +86,7 @@ export interface MapDef {
   id: string;
   name: string;
   wild?: boolean;
-  /** 地面层：必须是实心图块 */
   ground: number[][];
-  /** 物件层：-1 表示空 */
   objects: number[][];
   spawn: { x: number; y: number };
   portals: Portal[];
@@ -92,127 +112,157 @@ function rng(seed: number) {
   };
 }
 
-/** 房子：屋顶一行（左/中/右）+ 墙体一行（左/中/右）+ 门 + 窗 */
+/** 房子：屋脊 + 屋顶 + 两层墙 + 窗 + 门（共 4 行高） */
 function house(obj: number[][], x0: number, y0: number, w: number, doorOffset: number) {
+  // 屋脊
+  const mid = x0 + Math.floor(w / 2);
+  obj[y0][mid] = TILE.ROOF_TOP;
+
+  // 屋顶
   for (let i = 0; i < w; i++) {
-    obj[y0][x0 + i] = i === 0 ? TILE.ROOF_L : i === w - 1 ? TILE.ROOF_R : TILE.ROOF_M;
+    obj[y0 + 1][x0 + i] = i === 0 ? TILE.ROOF_L : i === w - 1 ? TILE.ROOF_R : TILE.ROOF_M;
   }
+  // 上层墙
   for (let i = 0; i < w; i++) {
-    obj[y0 + 1][x0 + i] = i === 0 ? TILE.WALL_L : i === w - 1 ? TILE.WALL_R : TILE.WALL_M;
+    obj[y0 + 2][x0 + i] = i === 0 ? TILE.WALL_L : i === w - 1 ? TILE.WALL_R : TILE.WALL_M;
   }
-  obj[y0 + 1][x0 + 1] = TILE.WINDOW;
-  obj[y0 + 1][x0 + doorOffset] = TILE.DOOR;
+  obj[y0 + 2][x0 + 1] = TILE.WINDOW;
+  if (w >= 5) obj[y0 + 2][x0 + w - 2] = TILE.WINDOW;
+  // 下层墙 + 门
+  for (let i = 0; i < w; i++) {
+    obj[y0 + 3][x0 + i] = i === 0 ? TILE.WALL_L : i === w - 1 ? TILE.WALL_R : TILE.WALL_M;
+  }
+  obj[y0 + 3][x0 + doorOffset] = TILE.DOOR;
+}
+
+/** 一排连起来的栅栏 */
+function fenceRow(obj: number[][], x0: number, x1: number, y: number) {
+  for (let x = x0; x <= x1; x++) {
+    obj[y][x] = x === x0 ? TILE.FENCE_L : x === x1 ? TILE.FENCE_R : TILE.FENCE_M;
+  }
+}
+
+/** 一片树丛（品种随机混用，避免呆板） */
+function grove(
+  obj: number[][],
+  r: () => number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number
+) {
+  for (let y = y0; y <= y1; y++) {
+    for (let x = x0; x <= x1; x++) {
+      if (!obj[y] || obj[y][x] === undefined) continue;
+      const roll = r();
+      obj[y][x] = roll < 0.55 ? TREES[Math.floor(r() * TREES.length)] : TILE.BUSH;
+    }
+  }
 }
 
 // ───────────────────── 城镇：青丘镇 ─────────────────────
 function buildTown(): MapDef {
-  const w = 28;
-  const h = 20;
+  const w = 30;
+  const h = 22;
   const ground = grid(w, h, TILE.GRASS);
   const obj = grid(w, h, -1);
   const r = rng(7);
 
   // 草地纹理
   for (let y = 1; y < h - 1; y++)
-    for (let x = 1; x < w - 1; x++) if (r() > 0.75) ground[y][x] = TILE.GRASS2;
+    for (let x = 1; x < w - 1; x++) if (r() > 0.78) ground[y][x] = TILE.GRASS2;
 
-  // 主路（横 + 纵）
-  rect(ground, 0, 10, w - 1, 11, TILE.PATH);
-  rect(ground, 13, 0, 14, h - 1, TILE.PATH);
+  // 主路：横贯 y=11，纵向 x=14
+  rect(ground, 0, 11, w - 1, 12, TILE.PATH);
+  rect(ground, 14, 0, 15, h - 1, TILE.PATH);
 
-  // 房屋
-  house(obj, 4, 4, 6, 2);
-  house(obj, 18, 4, 6, 3);
+  // 两栋房子（4 行高）
+  house(obj, 3, 3, 7, 3); // 医馆
+  house(obj, 20, 3, 7, 3); // 杂货铺
 
   // 外围树林
-  for (let x = 0; x < w; x++) {
-    obj[0][x] = TILE.TREE;
-    obj[h - 1][x] = TILE.TREE;
-  }
-  for (let y = 0; y < h; y++) {
-    obj[y][0] = TILE.TREE;
-    obj[y][w - 1] = TILE.TREE;
-  }
+  grove(obj, r, 0, 0, w - 1, 0);
+  grove(obj, r, 0, h - 1, w - 1, h - 1);
+  grove(obj, r, 0, 0, 0, h - 1);
+  grove(obj, r, w - 1, 0, w - 1, h - 1);
 
-  // 树丛
-  const groves: [number, number, number, number][] = [
-    [2, 2, 3, 4],
-    [23, 2, 2, 3],
-    [2, 14, 2, 3],
-    [24, 14, 2, 3],
-  ];
-  for (const [x, y, ww, hh] of groves) rect(obj, x, y, x + ww - 1, y + hh - 1, TILE.TREE);
+  // 镇内树丛
+  grove(obj, r, 2, 9, 4, 10);
+  grove(obj, r, 25, 9, 27, 10);
+  grove(obj, r, 2, 17, 5, 19);
+  grove(obj, r, 24, 17, 27, 19);
 
-  // 灌木
-  for (const [x, y] of [[6, 9], [17, 9], [11, 6], [16, 6], [9, 13], [21, 13]] as [number, number][])
+  // 灌木点缀
+  for (const [x, y] of [[7, 10], [19, 10], [11, 7], [18, 7], [10, 16], [20, 16]] as [number, number][])
     obj[y][x] = TILE.BUSH;
+  // 小草、蘑菇
+  for (const [x, y] of [[6, 9], [21, 9], [12, 18], [17, 6]] as [number, number][]) obj[y][x] = TILE.SHRUB;
+  obj[19][8] = TILE.MUSHROOM;
 
-  // 花（不挡路）
+  // 花
   for (const [x, y] of [
-    [3, 9], [7, 13], [10, 9], [16, 13], [20, 9], [24, 9], [5, 12], [22, 12], [12, 3], [15, 16],
+    [3, 8], [8, 13], [12, 8], [17, 13], [22, 8], [26, 8], [4, 14], [24, 14], [13, 3], [16, 18],
   ] as [number, number][])
     if (obj[y][x] === -1) obj[y][x] = TILE.FLOWER;
 
-  // 沿路栅栏
-  for (let x = 4; x <= 10; x++) if (obj[12][x] === -1) obj[12][x] = TILE.FENCE;
-  for (let x = 17; x <= 23; x++) if (obj[12][x] === -1) obj[12][x] = TILE.FENCE;
+  // 沿路栅栏（左右两段，连成排）
+  fenceRow(obj, 3, 11, 13);
+  fenceRow(obj, 18, 26, 13);
 
   // 路牌
-  obj[9][12] = TILE.SIGN;
+  obj[10][13] = TILE.SIGN;
 
   return {
     id: 'town',
     name: '青丘镇',
     ground,
     objects: obj,
-    spawn: { x: 13, y: 14 },
-    portals: [{ x: 0, y: 10, to: 'field', spawn: { x: 2, y: 13 } }],
+    spawn: { x: 14, y: 15 },
+    portals: [{ x: 0, y: 11, to: 'field', spawn: { x: 2, y: 13 } }],
   };
 }
 
 // ───────────────────── 野区：青丘野径 ─────────────────────
 function buildField(): MapDef {
-  const w = 36;
-  const h = 26;
+  const w = 38;
+  const h = 28;
   const ground = grid(w, h, TILE.GRASS);
   const obj = grid(w, h, -1);
   const r = rng(31);
 
-  // 野区地面用带碎草的变体
+  // 野区地面偏深
   for (let y = 1; y < h - 1; y++)
     for (let x = 1; x < w - 1; x++) if (r() > 0.3) ground[y][x] = TILE.GRASS2;
 
   // 入口小路
-  rect(ground, 0, 12, 7, 13, TILE.PATH);
+  rect(ground, 0, 12, 8, 13, TILE.PATH);
 
   // 外围树林
-  for (let x = 0; x < w; x++) {
-    obj[0][x] = TILE.TREE;
-    obj[h - 1][x] = TILE.TREE;
-  }
-  for (let y = 0; y < h; y++) {
-    obj[y][0] = TILE.TREE;
-    obj[y][w - 1] = TILE.TREE;
-  }
+  grove(obj, r, 0, 0, w - 1, 0);
+  grove(obj, r, 0, h - 1, w - 1, h - 1);
+  grove(obj, r, 0, 0, 0, h - 1);
+  grove(obj, r, w - 1, 0, w - 1, h - 1);
 
-  // 四大片树林，形成通道
-  rect(obj, 10, 2, 18, 8, TILE.TREE);
-  rect(obj, 22, 2, 30, 7, TILE.TREE);
-  rect(obj, 12, 16, 22, 23, TILE.TREE);
-  rect(obj, 26, 14, 33, 20, TILE.TREE);
+  // 四片树林围出通道
+  grove(obj, r, 11, 2, 19, 8);
+  grove(obj, r, 23, 2, 31, 7);
+  grove(obj, r, 13, 17, 23, 25);
+  grove(obj, r, 27, 15, 35, 21);
 
   // 灌木
   for (const [x, y] of [
-    [9, 10], [19, 12], [24, 10], [8, 16], [11, 11], [17, 15], [25, 11], [31, 9], [30, 22], [14, 10],
+    [10, 11], [20, 12], [25, 10], [9, 17], [12, 11], [18, 16], [26, 11], [32, 10], [31, 23], [15, 11],
   ] as [number, number][])
     if (obj[y][x] === -1) obj[y][x] = TILE.BUSH;
 
-  // 花
-  for (let i = 0; i < 30; i++) {
+  // 小草 / 蘑菇 / 花
+  for (let i = 0; i < 18; i++) {
     const x = 1 + Math.floor(r() * (w - 2));
     const y = 1 + Math.floor(r() * (h - 2));
-    if (obj[y][x] === -1 && ground[y][x] === TILE.GRASS2) obj[y][x] = TILE.FLOWER;
+    if (obj[y][x] === -1) obj[y][x] = r() > 0.5 ? TILE.SHRUB : TILE.FLOWER;
   }
+  obj[9][14] = TILE.MUSHROOM;
+  obj[20][29] = TILE.MUSHROOM;
 
   return {
     id: 'field',
@@ -221,7 +271,7 @@ function buildField(): MapDef {
     ground,
     objects: obj,
     spawn: { x: 5, y: 12 },
-    portals: [{ x: 0, y: 12, to: 'town', spawn: { x: 2, y: 10 } }],
+    portals: [{ x: 0, y: 12, to: 'town', spawn: { x: 2, y: 11 } }],
   };
 }
 
