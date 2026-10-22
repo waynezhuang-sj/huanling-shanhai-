@@ -8,15 +8,14 @@ export const TILE = {
   // ── 地面（只放地面层）──
   GRASS: 0,
   GRASS2: 1,
-  PATH: 40, // 干净土路，无边框，可平铺
+  PATH: 25, // 最干净的土路（无边框、无杂点）
 
   // ── 覆盖物（放物件层，背景透明）──
   FLOWER: 2,
-  TREE_ROUND: 16,
-  TREE_PINE: 4,
-  TREE_PINE2: 19,
-  TREE_ROUND2: 5,
-  TREE_SMALL: 28,
+  TREE_ROUND: 16, // 圆冠树（绿）
+  TREE_ROUND2: 5, // 圆冠树（另一变体）
+  TREE_LEAFY: 28, // 叶簇树（绿）
+  TREE_AUTUMN: 15, // 秋色树（橙，增加层次）
   SHRUB: 18,
   MUSHROOM: 29,
   BUSH: 30,
@@ -50,10 +49,9 @@ export const TILE = {
 
 const TREES = [
   TILE.TREE_ROUND,
-  TILE.TREE_PINE,
   TILE.TREE_ROUND2,
-  TILE.TREE_SMALL,
-  TILE.TREE_PINE2,
+  TILE.TREE_LEAFY,
+  TILE.TREE_AUTUMN,
 ];
 
 /** 走不过去的图块 */
@@ -155,7 +153,7 @@ function grove(
     for (let x = x0; x <= x1; x++) {
       if (!obj[y] || obj[y][x] === undefined) continue;
       const roll = r();
-      obj[y][x] = roll < 0.55 ? TREES[Math.floor(r() * TREES.length)] : TILE.BUSH;
+      obj[y][x] = TREES[Math.floor(r() * TREES.length)];
     }
   }
 }
@@ -192,11 +190,11 @@ function buildTown(): MapDef {
   grove(obj, r, 2, 17, 5, 19);
   grove(obj, r, 24, 17, 27, 19);
 
-  // 灌木点缀
+  // 树丛点缀
   for (const [x, y] of [[7, 10], [19, 10], [11, 7], [18, 7], [10, 16], [20, 16]] as [number, number][])
-    obj[y][x] = TILE.BUSH;
-  // 小草、蘑菇
-  for (const [x, y] of [[6, 9], [21, 9], [12, 18], [17, 6]] as [number, number][]) obj[y][x] = TILE.SHRUB;
+    obj[y][x] = TREES[Math.floor(r() * TREES.length)];
+  // 花
+  for (const [x, y] of [[6, 9], [21, 9], [12, 18], [17, 6]] as [number, number][]) obj[y][x] = TILE.FLOWER;
   obj[19][8] = TILE.MUSHROOM;
 
   // 花
@@ -253,13 +251,13 @@ function buildField(): MapDef {
   for (const [x, y] of [
     [10, 11], [20, 12], [25, 10], [9, 17], [12, 11], [18, 16], [26, 11], [32, 10], [31, 23], [15, 11],
   ] as [number, number][])
-    if (obj[y][x] === -1) obj[y][x] = TILE.BUSH;
+    if (obj[y][x] === -1) obj[y][x] = TREES[Math.floor(r() * TREES.length)];
 
   // 小草 / 蘑菇 / 花
   for (let i = 0; i < 18; i++) {
     const x = 1 + Math.floor(r() * (w - 2));
     const y = 1 + Math.floor(r() * (h - 2));
-    if (obj[y][x] === -1) obj[y][x] = r() > 0.5 ? TILE.SHRUB : TILE.FLOWER;
+    if (obj[y][x] === -1) obj[y][x] = TILE.FLOWER;
   }
   obj[9][14] = TILE.MUSHROOM;
   obj[20][29] = TILE.MUSHROOM;

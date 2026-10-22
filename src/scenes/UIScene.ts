@@ -23,7 +23,9 @@ export default class UIScene extends Phaser.Scene {
     this.hintText = this.add
       .text(8, this.scale.height - 20, '方向键 / WASD 移动　·　手机按住屏幕拖动　·　走到地图边缘切换', {
         fontSize: '10px',
-        color: '#9aa5b1',
+        color: '#e8eef5',
+        backgroundColor: '#0d1117cc',
+        padding: { x: 4, y: 2 },
         fontFamily: '"PingFang SC", "Noto Sans SC", sans-serif',
       })
       .setDepth(10);
