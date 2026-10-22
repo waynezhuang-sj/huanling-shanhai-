@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { MAPS, SOLID, TILE, type MapDef } from '../data/maps';
 import UIScene from './UIScene';
+import { rollWild } from '../battle/engine';
+import { WILD_TABLE } from '../data/creatures';
+import { healAll } from '../state/party';
 
 const SPEED = 84;
 const TS = 16;
@@ -17,6 +20,8 @@ export default class OverworldScene extends Phaser.Scene {
   private switching = false;
   private lastTile = '';
   private virtual = { x: 0, y: 0 };
+  private battleActive = false;
+  private stepCounter = 0;
   private moving = false;
 
   constructor() {
@@ -110,6 +115,34 @@ export default class OverworldScene extends Phaser.Scene {
     const applyName = () => this.refreshLabel();
     if (this.ui.sys.isActive()) applyName();
     else this.ui.events.once(Phaser.Scenes.Events.CREATE, applyName);
+
+    // 战斗结束返回
+    this.events.on(Phaser.Scenes.Events.RESUME, (_sys: unknown, data?: { battleLost?: boolean }) => {
+      this.battleActive = false;
+      this.stepCounter = 0;
+      if (data?.battleLost) {
+        healAll();
+        this.cameras.main.resetFX();
+        this.scene.restart({ mapId: 'town', spawn: MAPS.town.spawn });
+      }
+    });
+
+    // 调试入口：URL 带 ?battle=1 直接开战斗场景（便于验收/截图）
+    if (new URLSearchParams(window.location.search).has('battle')) {
+      this.scene.launch('Battle', { enemy: rollWild(WILD_TABLE) });
+    }
+  }
+
+  /** 野区遇敌：暂停探索，启动战斗场景 */
+  private startBattle() {
+    this.battleActive = true;
+    const body = this.player.body as Phaser.Physics.Arcade.Body;
+    body.setVelocity(0, 0);
+    this.cameras.main.flash(160, 255, 255, 255);
+    this.time.delayedCall(180, () => {
+      this.scene.pause();
+      this.scene.launch('Battle', { enemy: rollWild(WILD_TABLE) });
+    });
   }
 
   private spawnTile() {
@@ -168,6 +201,18 @@ export default class OverworldScene extends Phaser.Scene {
     const key = `${tx},${ty}`;
     if (key === this.lastTile) return;
     this.lastTile = key;
+
+    // ── 野区随机遇敌 ──
+    if (this.mapDef.wild && !this.switching && !this.battleActive) {
+      this.stepCounter += 1;
+      if (this.stepCounter >= 2) {
+        this.stepCounter = 0;
+        if (Math.random() < 0.16) {
+          this.startBattle();
+          return;
+        }
+      }
+    }
 
     const portal = this.mapDef.portals.find((p) => p.x === tx && p.y === ty);
     if (portal) {
