@@ -14,6 +14,7 @@ export default class OverworldScene extends Phaser.Scene {
   private ui!: UIScene;
   private switching = false;
   private lastTile = '';
+  private virtual = { x: 0, y: 0 };
 
   constructor() {
     super('Overworld');
@@ -65,6 +66,30 @@ export default class OverworldScene extends Phaser.Scene {
       Phaser.Input.Keyboard.Key
     >;
 
+    // ── 触屏虚拟摇杆（屏幕中心为原点，按住任意位置即可拖动）──
+    const setVirtual = (pointer: Phaser.Input.Pointer) => {
+      const cx = this.scale.width / 2;
+      const cy = this.scale.height / 2;
+      let dx = pointer.x - cx;
+      let dy = pointer.y - cy;
+      const len = Math.hypot(dx, dy);
+      if (len < 24) {
+        this.virtual.x = 0;
+        this.virtual.y = 0;
+        return;
+      }
+      this.virtual.x = dx / len;
+      this.virtual.y = dy / len;
+    };
+    this.input.on('pointerdown', setVirtual);
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (p.isDown) setVirtual(p);
+    });
+    this.input.on('pointerup', () => {
+      this.virtual.x = 0;
+      this.virtual.y = 0;
+    });
+
     // ── UI 场景（独立，不受缩放影响）──
     if (!this.scene.isActive('UI')) {
       this.scene.launch('UI');
@@ -100,6 +125,12 @@ export default class OverworldScene extends Phaser.Scene {
       const k = Math.SQRT1_2;
       vx *= k;
       vy *= k;
+    }
+
+    // 触屏摇杆（已归一化，直接覆盖）
+    if (this.virtual.x !== 0 || this.virtual.y !== 0) {
+      vx = this.virtual.x;
+      vy = this.virtual.y;
     }
 
     body.setVelocity(vx * SPEED, vy * SPEED);
